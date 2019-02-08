@@ -38,19 +38,19 @@ Polyfit is run on light curves. The input file can either contain 1 column
 flux and standard deviation). You can additionally pass the following switches
 to polyfit:
 
-  -o order          ..  fitting polynomial order (default: 2)
-  -i iters          ..  number of iterations (default: 10000)
-  -s step           ..  step for random knot displacement (default: 0.01)
-  -k k1 k2 ... kN   ..  explicit list of knots
-  -n vertices       ..  number of equidistant vertices in the computed fit
-  --find-knots      ..  attempt to find knots automatically
-  --find-step       ..  attempt to find step automatically
-  --chain-length    ..  minimum chain length for automatic knot search
-  --apply-pshift    ..  shift phase so that the polyfit minimum is at phase 0
-  --residuals       ..  output residuals instead of the fit itself
-  --csv-input       ..  comma-separated value file input
-  --csv-output      ..  comma-separated value output
-  --summary-output  ..  output a single summary line from polyfit
+    -o order          ..  fitting polynomial order (default: 2)
+    -i iters          ..  number of iterations (default: 10000)
+    -s step           ..  step for random knot displacement (default: 0.01)
+    -k k1 k2 ... kN   ..  explicit list of knots
+    -n vertices       ..  number of equidistant vertices in the computed fit
+    --find-knots      ..  attempt to find knots automatically
+    --find-step       ..  attempt to find step automatically
+    --chain-length    ..  minimum chain length for automatic knot search
+    --apply-pshift    ..  shift phase so that the polyfit minimum is at phase 0
+    --residuals       ..  output residuals instead of the fit itself
+    --csv-input       ..  comma-separated value file input
+    --csv-output      ..  comma-separated value output
+    --summary-output  ..  output a single summary line from polyfit
 
 The best way to get started is to use the demo input file 'lc.dat'. Invoke
 polyfit with:
