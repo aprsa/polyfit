@@ -28,6 +28,7 @@ int    APPLY_PSHIFT = 0;
 
 int    CSV_INPUT = 0;
 int    CSV_OUTPUT = 0;
+int    EBAI_OUTPUT = 0;
 int    SUMMARY_OUTPUT = 0;
 
 double LLIMIT = -1e20;
@@ -76,7 +77,7 @@ int find_knots (triplet *data, int nobs, double **knots)
         average += data[i].y;
     average /= (double) nobs;
 
-    if (!SUMMARY_OUTPUT) {
+    if (!SUMMARY_OUTPUT && !EBAI_OUTPUT) {
         printf ("# searching for knots automatically:\n");
         printf ("# * average value of the flux: %lf\n", average);
     }
@@ -156,13 +157,13 @@ int find_knots (triplet *data, int nobs, double **knots)
             /* else drop through without recording it because it is shorter. */
         }
 
-        if (!SUMMARY_OUTPUT)
+        if (!SUMMARY_OUTPUT && !EBAI_OUTPUT)
             printf ("# * found a chain from %lf (index %d/%d) to %lf (index %d/%d)\n", data[chain_wrapped*nobs+i].x, chain_wrapped*nobs+i, nobs-1, data[i+j-1].x, i+j-1, nobs-1);
         i += j-1;
         if (chain_wrapped) break;
     }
 
-    if (!SUMMARY_OUTPUT)
+    if (!SUMMARY_OUTPUT && !EBAI_OUTPUT)
         printf ("# * total number of chains found: %d\n", chains);
 
     /* If the number of chains is less than 2, the search for knots failed. */
@@ -251,7 +252,7 @@ double polyfit (triplet *data, int nobs, int KNOTS, double *knots, int VERBOSE, 
         return 1e10;
     }
 
-    if (VERBOSE && !SUMMARY_OUTPUT) {
+    if (VERBOSE && !SUMMARY_OUTPUT && !EBAI_OUTPUT) {
         printf ("# Phase space partitioning:\n# \n");
         for (k = 0; k < KNOTS-1; k++)
             printf ("#   interval %2d: [% 3.3lf, % 3.3lf), %3d data points\n", k, knots[k], knots[k+1], n[k]);
@@ -297,7 +298,7 @@ double polyfit (triplet *data, int nobs, int KNOTS, double *knots, int VERBOSE, 
     }
 
     /* Write out a header: */
-    if (VERBOSE && !SUMMARY_OUTPUT) {
+    if (VERBOSE && !SUMMARY_OUTPUT && !EBAI_OUTPUT) {
         printf ("# \n# Weighted least-squares solution of the polyfit:\n# \n");
         printf ("#    knot\t\t");
         for (k = 0; k < POLYORDER+1; k++)
@@ -359,7 +360,7 @@ double polyfit (triplet *data, int nobs, int KNOTS, double *knots, int VERBOSE, 
         ck[0][k] = gsl_vector_get (c[0], k);
     chi2tot = chisq;
 
-    if (VERBOSE && !SUMMARY_OUTPUT) {
+    if (VERBOSE && !SUMMARY_OUTPUT && !EBAI_OUTPUT) {
         printf ("# % 12.12lf\t", knots[0]);
         for (k = 0; k < POLYORDER+1; k++)
             printf ("% 12.12lf\t", ck[0][POLYORDER-k]);
@@ -384,7 +385,7 @@ double polyfit (triplet *data, int nobs, int KNOTS, double *knots, int VERBOSE, 
         for (k = 0; k < POLYORDER; k++)
             ck[j][k] = gsl_vector_get (c[j], k);
         
-        if (VERBOSE && !SUMMARY_OUTPUT) {
+        if (VERBOSE && !SUMMARY_OUTPUT && !EBAI_OUTPUT) {
             printf ("# % 12.12lf\t", knots[j]);
             for (k = 0; k < POLYORDER+1; k++)
                 printf ("% 12.12lf\t", ck[j][POLYORDER-k]);
@@ -430,7 +431,7 @@ double polyfit (triplet *data, int nobs, int KNOTS, double *knots, int VERBOSE, 
         chi2tot += chisq;
     }
 
-    if (VERBOSE && !SUMMARY_OUTPUT) {
+    if (VERBOSE && !SUMMARY_OUTPUT && !EBAI_OUTPUT) {
         printf ("# % 12.12lf\t", knots[j]);
         for (k = 0; k < POLYORDER+1; k++)
             printf ("% 12.12lf\t", ck[j][POLYORDER-k]);
@@ -503,14 +504,14 @@ double polyfit (triplet *data, int nobs, int KNOTS, double *knots, int VERBOSE, 
 
             if (SUMMARY_OUTPUT)
                 printf ("%lf\n", pshift);
-            else {
+            else if (!EBAI_OUTPUT) {
                 printf ("# \n# Polyfit minimum occurs at: (%lf, %lf)\n", pshift, minval);
                 printf ("# Polyfit maximum occurs at: (%lf, %lf)\n", xmax, maxval);
                 printf ("# Polyfit amplitude is: %lf (%3.3lf%%)\n", maxval-minval, (maxval-minval)/maxval*100.0);
             }
         }
 
-        if (!SUMMARY_OUTPUT) {
+        if (!SUMMARY_OUTPUT && !EBAI_OUTPUT) {
             printf ("# \n# Theoretical light curve:\n# \n#   Phase:\t   Flux:\n");
             for (i = 0; i <= NVERT; i++) {
                 phase = -0.5 + (double) i / NVERT;
@@ -519,6 +520,13 @@ double polyfit (triplet *data, int nobs, int KNOTS, double *knots, int VERBOSE, 
                     printf ("%lf,%12.12lf\n", phase, compute_flux (phase, knots, ck));
                 else
                     printf ("  % lf\t% 12.12lf\n", phase, compute_flux (phase, knots, ck));
+            }
+        }
+        else if (EBAI_OUTPUT) {
+            for (i = 0; i <= NVERT; i++) {
+                phase = -0.5 + (double) i / NVERT;
+                if (APPLY_PSHIFT) phase += pshift;
+                printf ("% 12.12lf\n", compute_flux (phase, knots, ck));
             }
         }
     }
@@ -614,6 +622,7 @@ int main (int argc, char **argv)
         printf ("  --csv-input       ..  take comma-separated-value file as input\n");
         printf ("  --csv-output      ..  print comma-separated-values at output\n");
         printf ("  --limits          ..  set lower/upper phase limit (detault: no filtering)\n");
+        printf ("  --ebai-output     ..  write a one-column output in ebai-compatible format\n");
         printf ("  --summary-output  ..  output a single summary line from polyfit\n\n");
         exit (0);
     }
@@ -670,6 +679,8 @@ int main (int argc, char **argv)
             CSV_OUTPUT = 1;
         if (strcmp (argv[i], "--summary-output") == 0)
             SUMMARY_OUTPUT = 1;
+        if (strcmp (argv[i], "--ebai-output") == 0)
+            EBAI_OUTPUT = 1;
         if (strcmp (argv[i], "--apply-pshift") == 0)
             APPLY_PSHIFT = 1;
     }
@@ -748,12 +759,12 @@ int main (int argc, char **argv)
     fclose (in);
     nobs = i;
 
-    if (!SUMMARY_OUTPUT)
+    if (!SUMMARY_OUTPUT && !EBAI_OUTPUT)
         printf ("# %d data points read in from %s.\n", nobs, argv[argc-1]);
 
     /* If only fluxes are provided, add equidistant nobs phases: */
     if (inputs == 1) {
-        if (!SUMMARY_OUTPUT)
+        if (!SUMMARY_OUTPUT && !EBAI_OUTPUT)
             printf("# * no phases given, assuming equidistant sampling between -0.5 and 0.5.\n");
         for (i=0; i<nobs; i++) {
             data[i].x = -0.5 + (double) i/(nobs-1);
@@ -765,7 +776,7 @@ int main (int argc, char **argv)
 
     if (FIND_KNOTS) {
         status = find_knots (data, nobs, &knots);
-        if (!SUMMARY_OUTPUT) {
+        if (!SUMMARY_OUTPUT && !EBAI_OUTPUT) {
             if (status != 0)
                 printf ("# * automatic search for knots failed, reverting to defaults.\n");
             else
@@ -797,7 +808,7 @@ int main (int argc, char **argv)
         STEP_SIZE = diff / 5.0;
     }
 
-    if (!SUMMARY_OUTPUT) {
+    if (!SUMMARY_OUTPUT && !EBAI_OUTPUT) {
         printf ("# Fitting polynomial order: %d\n", POLYORDER);
         printf ("# Initial set of knots: {");
         for (i = 0; i < KNOTS-1; i++)
@@ -811,7 +822,7 @@ int main (int argc, char **argv)
     gsl_rng_set (r, 1);
 
     chi2 = polyfit (data, nobs, KNOTS, knots, 0, 0);
-    if (!SUMMARY_OUTPUT)
+    if (!SUMMARY_OUTPUT && !EBAI_OUTPUT)
         printf ("# Original chi2: %e\n", chi2);
 
     test = malloc (KNOTS * sizeof (*test));
@@ -834,7 +845,7 @@ int main (int argc, char **argv)
         }
     }
 
-    if (!SUMMARY_OUTPUT)
+    if (!SUMMARY_OUTPUT && !EBAI_OUTPUT)
         printf ("# Final chi2:    %e\n", chi2);
 
     if (SUMMARY_OUTPUT)
