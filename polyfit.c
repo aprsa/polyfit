@@ -502,8 +502,12 @@ double polyfit (triplet *data, int nobs, int KNOTS, double *knots, int VERBOSE, 
                 }
             }
 
-            if (SUMMARY_OUTPUT)
-                printf ("%lf\n", pshift);
+            if (SUMMARY_OUTPUT) {
+                printf ("%lf", pshift);
+                for (k = 0; k < POLYORDER+1; k++)
+                    printf ("   %lf", knots[k]);
+                printf("\n");
+            }
             else if (!EBAI_OUTPUT) {
                 printf ("# \n# Polyfit minimum occurs at: (%lf, %lf)\n", pshift, minval);
                 printf ("# Polyfit maximum occurs at: (%lf, %lf)\n", xmax, maxval);
