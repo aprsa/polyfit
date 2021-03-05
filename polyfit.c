@@ -276,7 +276,7 @@ double polyfit (triplet *data, int nobs, int KNOTS, double *knots, int VERBOSE, 
         for (i = 0; i < n[j]; i++) {
             gsl_vector_set (x[j], i, data[int1index+cum+i].x - knots[j]);
             gsl_vector_set (y[j], i, data[int1index+cum+i].y);
-            gsl_vector_set (w[j], i, data[int1index+cum+i].z);
+            gsl_vector_set (w[j], i, 1./data[int1index+cum+i].z/data[int1index+cum+i].z);
             if (DEBUG)
                 printf ("%d: %lf\t%lf\t%lf\n", j, data[int1index+cum+i].x - knots[j], data[int1index+cum+i].y, data[int1index+cum+i].z);
         }
@@ -292,7 +292,7 @@ double polyfit (triplet *data, int nobs, int KNOTS, double *knots, int VERBOSE, 
         }
         gsl_vector_set (x[j], i, data[int1index+cum+i].x - knot);
         gsl_vector_set (y[j], i, data[int1index+cum+i].y);
-        gsl_vector_set (w[j], i, data[int1index+cum+i].z);
+        gsl_vector_set (w[j], i, 1./data[int1index+cum+i].z/data[int1index+cum+i].z);
         if (DEBUG)
             printf ("%d: %lf\t%lf\t%lf\n", j, data[int1index+cum+i].x - knot, data[int1index+cum+i].y, data[int1index+cum+i].z);
     }
